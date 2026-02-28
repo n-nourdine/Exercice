@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Plateforme Pro - Exercices Tableaux Avancés</title>
+
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f9; }
+      header { background: #1e293b; color: white; padding: 20px; text-align: center; }
+      .progress-container { background: #e2e8f0; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 40px; }
+      .progress-bar { height: 100%; width: 0%; background: #22c55e; transition: 0.3s; }
+      .score { text-align: center; margin-bottom: 20px; font-weight: bold; }
+      .exercise { background: white; margin: 30px 40px; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+      .exercise h2 { margin-top: 0; }
+      .description { background: #e2e8f0; padding: 10px; margin-bottom: 15px; border-left: 4px solid #2563eb; }
+      .model { background: #f1f5f9; padding: 15px; margin-bottom: 15px; }
+      .editor { display: flex; gap: 15px; }
+      textarea { width: 50%; height: 150px; font-family: monospace; padding: 10px; }
+      iframe { width: 50%; height: 150px; border: 1px solid #ccc; background: white; }
+      button { margin-top: 10px; padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+      button:hover { background: #1d4ed8; }
+      .result { margin-top: 10px; font-weight: bold; }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>Exercice AFPROME</h1>
+      <p>Reproduis exactement le modèle pour valider l’exercice</p>
+    </header>
+
+    <div class="score">Score : <span id="score">0</span> / 20</div>
+    <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
+    <div id="exercises"></div>
+
+    <script>
+      const exercisesData = [
+        { title:"Exercice 1 - Tableau simple", description:"Crée un tableau avec deux colonnes : Nom et Âge, et une ligne Alice, 22.", model:`<table border="1"><tr><th>Nom</th><th>Âge</th></tr><tr><td>Alice</td><td>22</td></tr></table>` },
+        { title:"Exercice 2 - Trois colonnes", description:"Ajoute une colonne Ville et une deuxième ligne pour Karim, 25, Lyon.", model:`<table border="1"><tr><th>Nom</th><th>Âge</th><th>Ville</th></tr><tr><td>Alice</td><td>22</td><td>Paris</td></tr><tr><td>Karim</td><td>25</td><td>Lyon</td></tr></table>` },
+        { title:"Exercice 3 - Liste produits", description:"Crée un tableau avec Produit et Prix pour PC 800€ et Souris 20€.", model:`<table border="1"><tr><th>Produit</th><th>Prix</th></tr><tr><td>PC</td><td>800€</td></tr><tr><td>Souris</td><td>20€</td></tr></table>` },
+        { title:"Exercice 4 - Colspan", description:"Ajoute une ligne Total fusionnée sur deux colonnes.", model:`<table border="1"><tr><th>Produit</th><th>Prix</th></tr><tr><td>PC</td><td>800€</td></tr><tr><td colspan="2"><b>Total</b></td></tr></table>` },
+        { title:"Exercice 5 - Rowspan", description:"Fusionne la cellule Lundi sur deux matières : Maths et Français.", model:`<table border="1"><tr><th>Jour</th><th>Matière</th></tr><tr><td rowspan="2">Lundi</td><td>Maths</td></tr><tr><td>Français</td></tr></table>` },
+        { title:"Exercice 6 - En-tête double", description:"Crée un en-tête principal 2026 avec sous-colonnes T1 et T2.", model:`<table border="1"><tr><th colspan="2">2026</th></tr><tr><th>T1</th><th>T2</th></tr></table>` },
+        { title:"Exercice 7 - Thead/Tbody/Tfoot", description:"Utilise thead, tbody et tfoot pour Alice 22 ans.", model:`<table border="1"><thead><tr><th>Nom</th><th>Âge</th></tr></thead><tbody><tr><td>Alice</td><td>22</td></tr></tbody><tfoot><tr><td>Total</td><td>1 personne</td></tr></tfoot></table>` },
+        { title:"Exercice 8 - Tableau comparatif", description:"Crée un tableau comparatif Basic/Pro pour support Email et Téléphone.", model:`<table border="1"><tr><th>Fonctionnalité</th><th>Basic</th><th>Pro</th></tr><tr><td>Support Email</td><td>Oui</td><td>Oui</td></tr><tr><td>Support Téléphone</td><td>Non</td><td>Oui</td></tr></table>` },
+        { title:"Exercice 9 - Alignements", description:"Prix aligné à droite et stock centré.", model:`<table border="1"><tr><th>Produit</th><th>Prix</th><th>Stock</th></tr><tr><td>PC</td><td align="right">800€</td><td align="center">15</td></tr></table>` },
+        { title:"Exercice 10 - Caption", description:"Ajoute une caption 'Liste des étudiants'.", model:`<table border="1"><caption>Liste des étudiants</caption><tr><th>Nom</th><th>Note</th></tr><tr><td>Lina</td><td>18</td></tr><tr><td>Hugo</td><td>15</td></tr></table>` },
+
+        // Avancés
+        { title:"Exercice 11 - Zebra Striping", description:"Ajoute un style pour colorer les lignes paires en gris.", model:`<style>tr:nth-child(even){background:#f2f2f2;}</style><table border="1"><tr><th>Nom</th><th>Score</th></tr><tr><td>Alice</td><td>14</td></tr><tr><td>Karim</td><td>17</td></tr><tr><td>Sofia</td><td>12</td></tr></table>` },
+        { title:"Exercice 12 - Rowspan complexe", description:"Fusionne Lundi sur deux matières et affiche les salles correspondantes.", model:`<table border="1"><tr><th>Jour</th><th>Matière</th><th>Salle</th></tr><tr><td rowspan="2">Lundi</td><td>Maths</td><td>A1</td></tr><tr><td>Français</td><td>A2</td></tr></table>` },
+        { title:"Exercice 13 - Tableau financier", description:"Ajoute Revenus, Dépenses, Bénéfice et ligne Total général.", model:`<table border="1"><tr><th>Mois</th><th>Revenus</th><th>Dépenses</th><th>Bénéfice</th></tr><tr><td>Janvier</td><td>2000€</td><td>1200€</td><td>800€</td></tr><tr><td><b>Total</b></td><td colspan="3"><b>1800€</b></td></tr></table>` },
+        { title:"Exercice 14 - Double header complexe", description:"Crée un tableau pour 2025 et 2026 avec T1/T2/T3 et données.", model:`<table border="1"><tr><th colspan="3">2025</th><th colspan="3">2026</th></tr><tr><th>T1</th><th>T2</th><th>T3</th><th>T1</th><th>T2</th><th>T3</th></tr><tr><td>1000</td><td>1200</td><td>1300</td><td>1500</td><td>1700</td><td>1800</td></tr></table>` },
+        { title:"Exercice 15 - Planning simple", description:"Crée un planning 3 jours avec horaires et matières.", model:`<table border="1"><tr><th>Heure</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th></tr><tr><td>8-10</td><td>Maths</td><td>Anglais</td><td>Sport</td></tr><tr><td>10-12</td><td>Info</td><td>Maths</td><td>Français</td></tr></table>` },
+        { title:"Exercice 16 - Emploi du temps avancé", description:"Ajoute une pause déjeuner et rowspan pour certaines matières.", model:`<table border="1"><tr><th>Heure</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr><tr><td>8-10</td><td rowspan="2">Maths</td><td>Anglais</td><td>Sport</td><td>Info</td><td>Histoire</td></tr><tr><td>10-12</td><td>Maths</td><td>Français</td><td>Physique</td><td>SVT</td></tr><tr><td colspan="6" align="center"><b>Pause Déjeuner</b></td></tr></table>` },
+        { title:"Exercice 17 - Dashboard moderne", description:"Crée un tableau Nom, Email, Statut avec couleurs vert/rouge.", model:`<table border="1" style="border-collapse:collapse;"><tr style="background:#eee;"><th>Nom</th><th>Email</th><th>Statut</th></tr><tr><td>Sarah</td><td>sarah@email.com</td><td style="color:green;">Actif</td></tr><tr><td>Yassine</td><td>yassine@email.com</td><td style="color:red;">Inactif</td></tr></table>` },
+        { title:"Exercice 18 - Facture complète", description:"Produit, Quantité, Prix, Total, et ligne Total Général.", model:`<table border="1"><tr><th>Produit</th><th>Quantité</th><th>Prix</th><th>Total</th></tr><tr><td>PC</td><td>2</td><td>800€</td><td>1600€</td></tr><tr><td>Souris</td><td>3</td><td>20€</td><td>60€</td></tr><tr><td colspan="3" align="right"><b>Total Général</b></td><td><b>1660€</b></td></tr></table>` },
+        { title:"Exercice 19 - Statistiques avancées", description:"Tableau avec colonnes T1-T3 pour 2025 et 2026.", model:`<table border="1"><tr><th colspan="3">2025</th><th colspan="3">2026</th></tr><tr><th>T1</th><th>T2</th><th>T3</th><th>T1</th><th>T2</th><th>T3</th></tr><tr><td>1000</td><td>1200</td><td>1300</td><td>1500</td><td>1700</td><td>1800</td></tr></table>` },
+        { title:"Exercice 20 - Style Google Sheets", description:"Crée un tableau type Google Sheets avec bordure bleue sur une cellule.", model:`<table border="1" style="border-collapse:collapse;"><tr><th></th><th>A</th><th>B</th><th>C</th></tr><tr><th>1</th><td></td><td></td><td></td></tr><tr><th>2</th><td></td><td style="border:2px solid blue;"></td><td></td></tr><tr><th>3</th><td></td><td></td><td></td></tr></table>` }
+      ];
+
+      let score = 0;
+
+      function createExercises() {
+        const container = document.getElementById("exercises");
+        exercisesData.forEach((ex, i) => {
+          container.innerHTML += `
+        <div class="exercise">
+            <h2>${ex.title}</h2>
+            <div class="description">${ex.description}</div>
+            <div class="model">${ex.model}</div>
+            <div class="editor">
+                <textarea id="code${i}" oninput="saveCode(${i})">${localStorage.getItem("code" + i) || ""}</textarea>
+                <iframe id="preview${i}"></iframe>
+            </div>
+            <button onclick="runCode(${i})">Exécuter</button>
+            <button onclick="validate(${i})">Valider</button>
+            <div class="result" id="result${i}"></div>
+        </div>
+        `;
+        });
+      }
+
+      function runCode(i) {
+        const code = document.getElementById("code" + i).value;
+        document.getElementById("preview" + i).srcdoc = code;
+      }
+
+      function normalize(html) {
+        return html.replace(/\s+/g, "").toLowerCase();
+      }
+
+      function validate(i) {
+        const user = document.getElementById("code" + i).value;
+        const correct = exercisesData[i].model;
+
+        if (normalize(user) === normalize(correct)) {
+          document.getElementById("result" + i).innerHTML = "✅ Correct";
+          if (!localStorage.getItem("validated" + i)) {
+            score++;
+            localStorage.setItem("validated" + i, true);
+          }
+        } else {
+          document.getElementById("result" + i).innerHTML = "❌ Incorrect";
+        }
+
+        updateScore();
+      }
+
+      function updateScore() {
+        document.getElementById("score").innerText = score;
+        document.getElementById("progress").style.width =
+          (score / exercisesData.length) * 100 + "%";
+      }
+
+      function saveCode(i) {
+        localStorage.setItem("code" + i, document.getElementById("code" + i).value);
+      }
+
+      createExercises();
+      updateScore();
+    </script>
+  </body>
+</html>
